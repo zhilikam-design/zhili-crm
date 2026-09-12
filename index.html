@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>智礼专属 CRM 智能工作台 | ZhiLi Life Planner CRM</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide 图标库 -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js 核心图表库 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- 字体优化 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { -webkit-tap-highlight-color: transparent; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-24 md:pb-12 font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- 顶部导航栏 (电脑与手机自适应) -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 sm:px-6">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">智礼 CRM 工作台</h1>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Gemini 驱动</span>
+          </div>
+          <p class="text-xs text-slate-500 hidden sm:block">寿险全流程管理 · 转化率透视 · 智能跟进</p>
+        </div>
+      </div>
+
+      <!-- 右侧快捷操作区 -->
+      <div class="flex items-center space-x-2">
+        <button onclick="exportData()" title="导出备份JSON (电脑/手机同步)" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all border border-slate-200">
+          <i data-lucide="download" class="w-4 h-4"></i>
+        </button>
+        <label title="导入备份JSON" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all border border-slate-200 cursor-pointer">
+          <i data-lucide="upload" class="w-4 h-4"></i>
+          <input type="file" id="import-file" onchange="importData(event)" class="hidden" accept=".json">
+        </label>
+        <button onclick="openAddModal()" class="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm shadow-brand-600/30 transition-all">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>新增客户</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主体容器 -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 pt-5 space-y-6">
+
+    <!-- 顶栏快速选项卡 (Tab 切换) -->
+    <div class="flex bg-slate-200/80 p-1 rounded-xl max-w-md mx-auto sm:mx-0 text-xs font-semibold text-slate-600">
+      <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="flex-1 py-1.5 px-3 rounded-lg bg-white text-slate-900 shadow-sm transition-all flex items-center justify-center space-x-1">
+        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+        <span>数据驾驶舱</span>
+      </button>
+      <button onclick="switchTab('kanban')" id="tab-btn-kanban" class="flex-1 py-1.5 px-3 rounded-lg hover:text-slate-900 transition-all flex items-center justify-center space-x-1">
+        <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
+        <span>跟进漏斗看板</span>
+      </button>
+      <button onclick="switchTab('list')" id="tab-btn-list" class="flex-1 py-1.5 px-3 rounded-lg hover:text-slate-900 transition-all flex items-center justify-center space-x-1">
+        <i data-lucide="users" class="w-3.5 h-3.5"></i>
+        <span>客户名册</span>
+      </button>
+      <button onclick="switchTab('gemini')" id="tab-btn-gemini" class="flex-1 py-1.5 px-3 rounded-lg hover:text-slate-900 transition-all flex items-center justify-center space-x-1 text-emerald-700">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        <span>Gemini 话术</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: 数据驾驶舱 (DASHBOARD) -->
+    <div id="tab-dashboard" class="space-y-6">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <!-- 客户总库容 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-xs font-medium">客户总库容</span>
+            <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <i data-lucide="users" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="flex items-baseline space-x-2">
+            <span id="stat-total" class="text-2xl sm:text-3xl font-extrabold text-slate-900">0</span>
+            <span class="text-xs font-semibold text-emerald-600 flex items-center">
+              <i data-lucide="trending-up" class="w-3 h-3 mr-0.5"></i>+15%
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">含老板 Leads 与既有客户</p>
+        </div>
+
+        <!-- 报价待跟进 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-xs font-medium">已报价待跟进</span>
+            <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <i data-lucide="clock" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="flex items-baseline space-x-2">
+            <span id="stat-quoted" class="text-2xl sm:text-3xl font-extrabold text-amber-600">0</span>
+            <span class="text-xs text-slate-500">位重点客</span>
+          </div>
+          <p class="text-[11px] text-amber-600/80 mt-1">需持续答疑促成转化</p>
+        </div>
+
+        <!-- 签约转化率 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-xs font-medium">报价签约率</span>
+            <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <i data-lucide="badge-percent" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="flex items-baseline space-x-2">
+            <span id="stat-winrate" class="text-2xl sm:text-3xl font-extrabold text-emerald-600">0%</span>
+            <span class="text-xs font-semibold text-emerald-600 flex items-center">
+              <i data-lucide="arrow-up-right" class="w-3 h-3"></i>优良
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">已生效 / (已发报价 + 已生效)</p>
+        </div>
+
+        <!-- 方案总保费 -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-xs font-medium">累计方案年保费</span>
+            <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+              <i data-lucide="coins" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="flex items-baseline space-x-1">
+            <span class="text-xs font-bold text-purple-700">RM</span>
+            <span id="stat-premium" class="text-2xl sm:text-3xl font-extrabold text-slate-900">0</span>
+          </div>
+          <p class="text-[11px] text-purple-600 mt-1">高价值客群持续积累中</p>
+        </div>
+      </div>
+
+      <!-- 今日紧急待办预警条 -->
+      <div id="urgent-followup-banner" class="hidden bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-200 rounded-2xl p-4 flex items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0">
+            <i data-lucide="bell-ring" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-amber-900">今日有待跟进客户！</h4>
+            <p id="urgent-followup-desc" class="text-xs text-amber-700">请及时查看并送上问候或解答保单顾虑。</p>
+          </div>
+        </div>
+        <button onclick="switchTab('list')" class="shrink-0 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all">
+          立即查看
+        </button>
+      </div>
+
+      <!-- 图表视窗 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- 漏斗阶段分布柱状图 -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-sm text-slate-900">客户销售漏斗分布 (Pipeline Funnel)</h3>
+              <p class="text-xs text-slate-400">各跟进阶段的人数占比与沉淀</p>
+            </div>
+            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-medium">全量数据</span>
+          </div>
+          <div class="h-60 relative">
+            <canvas id="pipelineChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 险种需求分布甜甜圈图 -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-sm text-slate-900">意向与保障险种分布 (Coverage Mix)</h3>
+              <p class="text-xs text-slate-400">医疗卡、人寿、重疾保障的结构占比</p>
+            </div>
+            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-medium">主营业务</span>
+          </div>
+          <div class="h-60 relative flex items-center justify-center">
+            <canvas id="productChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: 跟进漏斗看板 (KANBAN VIEW - 5 列横向大屏) -->
+    <div id="tab-kanban" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="font-bold text-base text-slate-900">全流程跟进看板</h2>
+          <p class="text-xs text-slate-500">点击卡片可快速查看详情、编辑状态或调起 WhatsApp 沟通</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3 overflow-x-auto pb-4">
+        <!-- 列 1: 未触达 -->
+        <div class="bg-slate-100/80 p-3 rounded-2xl border border-slate-200/60 min-w-[260px] md:min-w-0 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 font-bold text-xs text-slate-700">
+            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-slate-400 mr-1.5"></span>未触达 (新名册)</span>
+            <span id="count-col-1" class="px-1.5 py-0.5 rounded-full bg-white text-slate-600 text-[10px]">0</span>
+          </div>
+          <div id="kanban-col-1" class="space-y-2.5 flex-1 min-h-[120px]"></div>
+        </div>
+
+        <!-- 列 2: 接触中 -->
+        <div class="bg-slate-100/80 p-3 rounded-2xl border border-slate-200/60 min-w-[260px] md:min-w-0 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 font-bold text-xs text-blue-700">
+            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 mr-1.5"></span>接触中 (分析中)</span>
+            <span id="count-col-2" class="px-1.5 py-0.5 rounded-full bg-white text-blue-600 text-[10px]">0</span>
+          </div>
+          <div id="kanban-col-2" class="space-y-2.5 flex-1 min-h-[120px]"></div>
+        </div>
+
+        <!-- 列 3: 已发报价 -->
+        <div class="bg-amber-50/60 p-3 rounded-2xl border border-amber-200/60 min-w-[260px] md:min-w-0 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-amber-200 font-bold text-xs text-amber-800">
+            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>已发报价 (待跟进)</span>
+            <span id="count-col-3" class="px-1.5 py-0.5 rounded-full bg-white text-amber-700 text-[10px]">0</span>
+          </div>
+          <div id="kanban-col-3" class="space-y-2.5 flex-1 min-h-[120px]"></div>
+        </div>
+
+        <!-- 列 4: 投保审核中 -->
+        <div class="bg-purple-50/60 p-3 rounded-2xl border border-purple-200/60 min-w-[260px] md:min-w-0 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-purple-200 font-bold text-xs text-purple-800">
+            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-purple-500 mr-1.5"></span>投保核保中</span>
+            <span id="count-col-4" class="px-1.5 py-0.5 rounded-full bg-white text-purple-700 text-[10px]">0</span>
+          </div>
+          <div id="kanban-col-4" class="space-y-2.5 flex-1 min-h-[120px]"></div>
+        </div>
+
+        <!-- 列 5: 已生效 -->
+        <div class="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200/60 min-w-[260px] md:min-w-0 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-emerald-200 font-bold text-xs text-emerald-800">
+            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>已生效 (现有客户)</span>
+            <span id="count-col-5" class="px-1.5 py-0.5 rounded-full bg-white text-emerald-700 text-[10px]">0</span>
+          </div>
+          <div id="kanban-col-5" class="space-y-2.5 flex-1 min-h-[120px]"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: 客户名册列表 (TABLE VIEW) -->
+    <div id="tab-list" class="hidden space-y-4">
+      <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input id="search-input" oninput="renderTable()" type="text" placeholder="搜索客户姓名、电话、险种或备注..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+        </div>
+        <div class="flex items-center space-x-2">
+          <select id="status-filter" onchange="renderTable()" class="bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+            <option value="all">所有阶段 (全部)</option>
+            <option value="1-未触达">未触达 (新名册)</option>
+            <option value="2-接触中">接触中 (需求挖掘)</option>
+            <option value="3-已发报价">已发报价 (待跟进)</option>
+            <option value="4-投保审核中">投保核保中</option>
+            <option value="5-已生效">已生效 (现有客户)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="divide-y divide-slate-100" id="customer-table-body"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: GEMINI 智能话术实验室 (AI STUDIO) -->
+    <div id="tab-gemini" class="hidden space-y-5">
+      <div class="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-3xl p-5 sm:p-7 text-white relative overflow-hidden shadow-lg shadow-emerald-700/20">
+        <div class="relative z-10 max-w-2xl">
+          <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold mb-3">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+            <span>Google Gemini 寿险智能话术引擎</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black tracking-tight">为不同客户生成“亲切、温和、无压力”的高情商回复</h2>
+          <p class="text-xs sm:text-sm text-emerald-100 mt-2">选择一位客户与对应的沟通情境，一键生成地道的大马日常沟通文案，并直接打开 WhatsApp 发送。</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- 左侧选择与配置 -->
+        <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <h3 class="font-bold text-sm text-slate-900 flex items-center space-x-2">
+            <i data-lucide="sliders" class="w-4 h-4 text-brand-600"></i>
+            <span>选择客户与情景</span>
+          </h3>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1.5">选择目标客户</label>
+            <select id="gemini-client-select" onchange="autoFillGeminiPrompt()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"></select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1.5">沟通情境 / 异议类型</label>
+            <select id="gemini-scenario-select" onchange="autoFillGeminiPrompt()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+              <option value="quote_followup">1. 发送 Quotation 满 3 天无回复 (温和跟进)</option>
+              <option value="budget_concern">2. 客户顾虑：“保费有点贵 / 下个月看看先” (预算解压)</option>
+              <option value="family_discuss">3. 客户说：“我要和另一半/家人商量看看”</option>
+              <option value="cold_outreach">4. 老板分配的新名单 (破冰打招呼与自我介绍)</option>
+              <option value="birthday_wish">5. 客户生日前后 (暖心生日祝福与家庭问候)</option>
+              <option value="annual_review">6. 现有客户 (保单年度检视与加保探讨)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1.5">客户具体痛点 / 个性备注</label>
+            <textarea id="gemini-custom-notes" rows="2" placeholder="例如：26岁，刚换工作，注重医疗卡额度和免赔额..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"></textarea>
+          </div>
+
+          <button onclick="generateGeminiReply()" class="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-brand-600/30 flex items-center justify-center space-x-2 transition-all">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>生成高情商亲切话术</span>
+          </button>
+        </div>
+
+        <!-- 右侧智能输出 -->
+        <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4 flex flex-col">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+              <h3 class="font-bold text-sm text-slate-900">Gemini 智能建议与回复方案</h3>
+            </div>
+            <span id="gemini-status-tag" class="text-[11px] font-medium text-slate-400">准备就绪</span>
+          </div>
+
+          <div id="gemini-analysis-box" class="bg-slate-50 border border-slate-200/60 rounded-xl p-3.5 text-xs text-slate-600 space-y-1">
+            <p class="font-semibold text-slate-800 flex items-center">
+              <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-500 mr-1"></i>
+              <span>客户心理剖析：</span>
+            </p>
+            <p id="gemini-psychology-text" class="text-slate-600 leading-relaxed">
+              请在左侧选择客户与情境，点击生成按钮获取深度心理洞察。
+            </p>
+          </div>
+
+          <div class="flex-1 flex flex-col space-y-2">
+            <label class="block text-xs font-semibold text-slate-700">推荐 WhatsApp 发送文案 (可直接编辑)：</label>
+            <textarea id="gemini-draft-box" rows="5" class="w-full flex-1 bg-emerald-50/40 border border-emerald-200 rounded-xl p-3.5 text-xs sm:text-sm font-medium text-slate-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="生成的文案将显示在这里..."></textarea>
+          </div>
+
+          <div class="flex items-center space-x-3 pt-2">
+            <button onclick="copyDraft()" class="flex-1 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span id="copy-btn-text">复制文案</span>
+            </button>
+            <button onclick="launchWhatsAppWithDraft()" class="flex-1 py-2.5 bg-[#25D366] hover:bg-[#20ba59] active:scale-95 text-white rounded-xl text-xs font-bold shadow-md shadow-[#25D366]/20 transition-all flex items-center justify-center space-x-1.5">
+              <i data-lucide="message-circle" class="w-4 h-4"></i>
+              <span>在 WhatsApp 中发送</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 模态框: 新增 / 编辑客户 -->
+  <div id="client-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto no-scrollbar space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modal-title" class="text-base font-bold text-slate-900">新增客户档案</h3>
+        <button onclick="closeModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="client-form" onsubmit="saveClient(event)" class="space-y-3">
+        <input type="hidden" id="form-client-id">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">客户姓名 *</label>
+            <input required id="form-name" type="text" placeholder="例如：陈伟强 (Alex)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">电话号码 *</label>
+            <input required id="form-phone" type="text" placeholder="例如：0123456789" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">名单来源</label>
+            <select id="form-source" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none">
+              <option value="老板分配Leads">老板分配Leads</option>
+              <option value="个人转介绍">个人转介绍</option>
+              <option value="小红书/社媒引流">小红书/社媒引流</option>
+              <option value="亲戚朋友">亲戚朋友</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">当前跟进阶段 *</label>
+            <select required id="form-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-brand-700 focus:outline-none">
+              <option value="1-未触达">1-未触达 (新名册)</option>
+              <option value="2-接触中">2-接触中 (需求挖掘)</option>
+              <option value="3-已发报价">3-已发报价 (待跟进)</option>
+              <option value="4-投保审核中">4-投保审核中</option>
+              <option value="5-已生效">5-已生效 (现有客户)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">意向 / 投保险种</label>
+            <select id="form-product" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none">
+              <option value="医疗健康卡 (Medical)">医疗健康卡 (Medical)</option>
+              <option value="重大疾病保障 (CI)">重大疾病保障 (CI)</option>
+              <option value="终身寿险 (Life)">终身寿险 (Life)</option>
+              <option value="储蓄/退休金 (Savings)">储蓄/退休金 (Savings)</option>
+              <option value="个人意外险 (PA)">个人意外险 (PA)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">方案/年缴保费 (RM)</label>
+            <input id="form-premium" type="number" placeholder="2400" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">客户生日</label>
+            <input id="form-birthday" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">下次跟进日期</label>
+            <input id="form-nextdate" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">跟进背景与客户顾虑</label>
+          <textarea id="form-notes" rows="2.5" placeholder="记录客户的顾虑点、家庭状况、上次沟通进展..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">取消</button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-sm">保存档案</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 手机端专用固定底部导航栏 -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2 px-6 md:hidden flex justify-around items-center">
+    <button onclick="switchTab('dashboard')" class="flex flex-col items-center text-slate-500 hover:text-brand-600 text-[10px] space-y-1">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span>驾驶舱</span>
+    </button>
+    <button onclick="switchTab('kanban')" class="flex flex-col items-center text-slate-500 hover:text-brand-600 text-[10px] space-y-1">
+      <i data-lucide="kanban" class="w-5 h-5"></i>
+      <span>漏斗看板</span>
+    </button>
+    <button onclick="switchTab('list')" class="flex flex-col items-center text-slate-500 hover:text-brand-600 text-[10px] space-y-1">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span>名册</span>
+    </button>
+    <button onclick="switchTab('gemini')" class="flex flex-col items-center text-emerald-600 text-[10px] space-y-1 font-bold">
+      <i data-lucide="sparkles" class="w-5 h-5"></i>
+      <span>Gemini</span>
+    </button>
+  </nav>
+
+  <!-- 核心交互逻辑与本地存储管理 -->
+  <script>
+    const initialClients = [
+      {
+        id: 'c1',
+        name: '陈伟强 (Alex)',
+        phone: '0123456789',
+        source: '老板分配Leads',
+        status: '3-已发报价',
+        product: '医疗健康卡 (Medical)',
+        premium: 2400,
+        birthday: '1998-05-18',
+        lastContact: '2026-09-08',
+        nextDate: '2026-09-13',
+        notes: '26岁单身，担心月缴压力。上周发了建议书，约定等他发薪后再跟进。'
+      },
+      {
+        id: 'c2',
+        name: '黄丽仪 (Rachel)',
+        phone: '0178889911',
+        source: '老板分配Leads',
+        status: '1-未触达',
+        product: '重大疾病保障 (CI)',
+        premium: 3600,
+        birthday: '1995-11-20',
+        lastContact: '',
+        nextDate: '2026-09-12',
+        notes: '新分配客户，从事 IT 行业，需打首次破冰电话建立信任。'
+      },
+      {
+        id: 'c3',
+        name: '拿督林金水 (Dato Lim)',
+        phone: '0192223344',
+        source: '个人转介绍',
+        status: '5-已生效',
+        product: '终身寿险 (Life)',
+        premium: 18000,
+        birthday: '1975-09-15',
+        lastContact: '2026-08-10',
+        nextDate: '2026-09-15',
+        notes: '已承保高额寿险与传承信托。下周二是他生日，已备好高品质问候。'
+      },
+      {
+        id: 'c4',
+        name: '张敏敏',
+        phone: '0165554321',
+        source: '小红书/社媒引流',
+        status: '2-接触中',
+        product: '医疗健康卡 (Medical)',
+        premium: 2100,
+        birthday: '2001-03-09',
+        lastContact: '2026-09-10',
+        nextDate: '2026-09-14',
+        notes: '应届毕业生，咨询首张医疗卡。已索取公司 Group Insurance 做保障缺口检视。'
+      },
+      {
+        id: 'c5',
+        name: '刘俊杰 (Lucas)',
+        phone: '01122334455',
+        source: '亲戚朋友',
+        status: '4-投保审核中',
+        product: '重大疾病保障 (CI)',
+        premium: 4200,
+        birthday: '1992-07-24',
+        lastContact: '2026-09-11',
+        nextDate: '2026-09-16',
+        notes: '已递交投保材料，因有轻微脂肪肝正等待公司核保部发出补体检通知。'
+      }
+    ];
+
+    let clients = JSON.parse(localStorage.getItem('zhili_crm_clients') || 'null');
+    if (!clients || clients.length === 0) {
+      clients = initialClients;
+      localStorage.setItem('zhili_crm_clients', JSON.stringify(clients));
+    }
+
+    let pipelineChartInstance = null;
+    let productChartInstance = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      updateDashboardStats();
+      initCharts();
+      renderKanban();
+      renderTable();
+      populateGeminiClientSelect();
+      checkUrgentFollowups();
+    });
+
+    function switchTab(tabId) {
+      const tabs = ['dashboard', 'kanban', 'list', 'gemini'];
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabId) {
+          el.classList.remove('hidden');
+          if (btn) {
+            btn.classList.add('bg-white', 'text-slate-900', 'shadow-sm');
+            btn.classList.remove('text-slate-600');
+          }
+        } else {
+          el.classList.add('hidden');
+          if (btn) {
+            btn.classList.remove('bg-white', 'text-slate-900', 'shadow-sm');
+            btn.classList.add('text-slate-600');
+          }
+        }
+      });
+      lucide.createIcons();
+      if (tabId === 'dashboard') {
+        updateDashboardStats();
+        updateCharts();
+      }
+    }
+
+    function updateDashboardStats() {
+      const total = clients.length;
+      const quoted = clients.filter(c => c.status === '3-已发报价').length;
+      const closed = clients.filter(c => c.status === '5-已生效').length;
+      const denominator = (quoted + closed);
+      const winrate = denominator > 0 ? Math.round((closed / denominator) * 100) : 0;
+      const totalPremium = clients.reduce((acc, curr) => acc + (Number(curr.premium) || 0), 0);
+
+      document.getElementById('stat-total').innerText = total;
+      document.getElementById('stat-quoted').innerText = quoted;
+      document.getElementById('stat-winrate').innerText = winrate + '%';
+      document.getElementById('stat-premium').innerText = totalPremium.toLocaleString();
+    }
+
+    function checkUrgentFollowups() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const dueClients = clients.filter(c => c.nextDate && c.nextDate <= todayStr);
+      const banner = document.getElementById('urgent-followup-banner');
+      const desc = document.getElementById('urgent-followup-desc');
+
+      if (dueClients.length > 0) {
+        banner.classList.remove('hidden');
+        desc.innerText = `检测到 ${dueClients.length} 位客户需跟进（包括 ${dueClients.map(c => c.name).slice(0, 2).join('、')}${dueClients.length > 2 ? '等' : ''}）。`;
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function initCharts() {
+      const ctx1 = document.getElementById('pipelineChart').getContext('2d');
+      const ctx2 = document.getElementById('productChart').getContext('2d');
+      const stageCounts = getStageCounts();
+
+      pipelineChartInstance = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: ['未触达', '接触中', '已发报价', '核保中', '已生效'],
+          datasets: [{
+            label: '客户数量',
+            data: [stageCounts['1'], stageCounts['2'], stageCounts['3'], stageCounts['4'], stageCounts['5']],
+            backgroundColor: ['#94a3b8', '#3b82f6', '#f59e0b', '#a855f7', '#10b981'],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      const productCounts = getProductCounts();
+      productChartInstance = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: ['医疗卡', '重疾保障', '终身寿险', '储蓄/退休', '意外险'],
+          datasets: [{
+            data: [productCounts.med, productCounts.ci, productCounts.life, productCounts.savings, productCounts.pa],
+            backgroundColor: ['#06b6d4', '#f43f5e', '#8b5cf6', '#eab308', '#64748b'],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function getStageCounts() {
+      const map = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+      clients.forEach(c => {
+        if (c.status.startsWith('1')) map['1']++;
+        else if (c.status.startsWith('2')) map['2']++;
+        else if (c.status.startsWith('3')) map['3']++;
+        else if (c.status.startsWith('4')) map['4']++;
+        else if (c.status.startsWith('5')) map['5']++;
+      });
+      return map;
+    }
+
+    function getProductCounts() {
+      const counts = { med: 0, ci: 0, life: 0, savings: 0, pa: 0 };
+      clients.forEach(c => {
+        const p = c.product || '';
+        if (p.includes('医疗')) counts.med++;
+        else if (p.includes('重疾')) counts.ci++;
+        else if (p.includes('寿险')) counts.life++;
+        else if (p.includes('储蓄')) counts.savings++;
+        else counts.pa++;
+      });
+      return counts;
+    }
+
+    function updateCharts() {
+      if (!pipelineChartInstance || !productChartInstance) return;
+      const s = getStageCounts();
+      pipelineChartInstance.data.datasets[0].data = [s['1'], s['2'], s['3'], s['4'], s['5']];
+      pipelineChartInstance.update();
+
+      const p = getProductCounts();
+      productChartInstance.data.datasets[0].data = [p.med, p.ci, p.life, p.savings, p.pa];
+      productChartInstance.update();
+    }
+
+    function renderKanban() {
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`kanban-col-${i}`).innerHTML = '';
+      }
+      const stageMap = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+
+      clients.forEach(client => {
+        let colIndex = 1;
+        if (client.status.startsWith('2')) colIndex = 2;
+        else if (client.status.startsWith('3')) colIndex = 3;
+        else if (client.status.startsWith('4')) colIndex = 4;
+        else if (client.status.startsWith('5')) colIndex = 5;
+
+        stageMap[colIndex]++;
+        const card = document.createElement('div');
+        card.className = "bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-2 cursor-pointer";
+        card.onclick = () => openEditModal(client.id);
+
+        const cleanPhone = client.phone.replace(/[^0-9]/g, '');
+        const waLink = `https://wa.me/6${cleanPhone}`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <span class="font-bold text-xs text-slate-900">${client.name}</span>
+            <span class="text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">${client.source}</span>
+          </div>
+          <div class="text-[11px] text-brand-700 font-semibold bg-brand-50/70 p-1.5 rounded-lg flex items-center justify-between">
+            <span>${client.product}</span>
+            <span class="text-slate-600 font-bold">RM ${Number(client.premium || 0).toLocaleString()}</span>
+          </div>
+          <p class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">${client.notes || '暂无跟进备忘'}</p>
+          <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-[10px] text-slate-400">
+            <span class="flex items-center">
+              <i data-lucide="calendar" class="w-3 h-3 mr-1 text-slate-400"></i>${client.nextDate || '未定跟进'}
+            </span>
+            <a href="${waLink}" target="_blank" onclick="event.stopPropagation()" class="text-emerald-600 hover:text-emerald-700 font-bold flex items-center">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5 mr-0.5"></i>WhatsApp
+            </a>
+          </div>
+        `;
+        document.getElementById(`kanban-col-${colIndex}`).appendChild(card);
+      });
+
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`count-col-${i}`).innerText = stageMap[i];
+      }
+      lucide.createIcons();
+    }
+
+    function renderTable() {
+      const search = (document.getElementById('search-input').value || '').toLowerCase();
+      const statusFilter = document.getElementById('status-filter').value;
+      const tbody = document.getElementById('customer-table-body');
+      tbody.innerHTML = '';
+
+      const filtered = clients.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(search) || 
+                              c.phone.includes(search) || 
+                              (c.product && c.product.toLowerCase().includes(search)) ||
+                              (c.notes && c.notes.toLowerCase().includes(search));
+        const matchesStatus = statusFilter === 'all' || c.status.includes(statusFilter);
+        return matchesSearch && matchesStatus;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <div class="p-8 text-center text-slate-400 text-xs">
+            <i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            没有找到匹配的客户档案
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach(client => {
+        const cleanPhone = client.phone.replace(/[^0-9]/g, '');
+        const waLink = `https://wa.me/6${cleanPhone}`;
+        
+        let badgeColor = 'bg-slate-100 text-slate-700';
+        if (client.status.includes('已发报价')) badgeColor = 'bg-amber-100 text-amber-800 border-amber-200';
+        else if (client.status.includes('已生效')) badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+        else if (client.status.includes('接触中')) badgeColor = 'bg-blue-100 text-blue-800 border-blue-200';
+        else if (client.status.includes('核保')) badgeColor = 'bg-purple-100 text-purple-800 border-purple-200';
+
+        const row = document.createElement('div');
+        row.className = "p-4 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer";
+        row.onclick = () => openEditModal(client.id);
+
+        row.innerHTML = `
+          <div class="flex items-start space-x-3">
+            <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center shrink-0 text-xs">
+              ${client.name.slice(0, 1)}
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="font-bold text-sm text-slate-900">${client.name}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${badgeColor}">${client.status}</span>
+              </div>
+              <div class="text-xs text-slate-500 mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                <span class="flex items-center"><i data-lucide="phone" class="w-3 h-3 mr-1 text-slate-400"></i>${client.phone}</span>
+                <span class="flex items-center"><i data-lucide="shield" class="w-3 h-3 mr-1 text-slate-400"></i>${client.product}</span>
+                <span class="flex items-center text-slate-700 font-medium"><i data-lucide="dollar-sign" class="w-3 h-3 text-slate-400"></i>RM ${Number(client.premium || 0).toLocaleString()}</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1.5 line-clamp-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">${client.notes || '暂无备注'}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2 self-end sm:self-center shrink-0">
+            <a href="${waLink}" target="_blank" onclick="event.stopPropagation()" class="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-xs rounded-xl flex items-center space-x-1 border border-emerald-200 transition-colors">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+              <span>WhatsApp</span>
+            </a>
+            <button onclick="event.stopPropagation(); quickSelectInGemini('${client.id}')" class="px-3 py-1.5 bg-brand-600 text-white hover:bg-brand-700 font-semibold text-xs rounded-xl flex items-center space-x-1 shadow-sm transition-all">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>话术</span>
+            </button>
+          </div>
+        `;
+        tbody.appendChild(row);
+      });
+      lucide.createIcons();
+    }
+
+    function openAddModal() {
+      document.getElementById('modal-title').innerText = "新增客户档案";
+      document.getElementById('form-client-id').value = "";
+      document.getElementById('client-form').reset();
+      document.getElementById('form-nextdate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('client-modal').classList.remove('hidden');
+    }
+
+    function openEditModal(id) {
+      const client = clients.find(c => c.id === id);
+      if (!client) return;
+      document.getElementById('modal-title').innerText = "编辑客户档案";
+      document.getElementById('form-client-id').value = client.id;
+      document.getElementById('form-name').value = client.name;
+      document.getElementById('form-phone').value = client.phone;
+      document.getElementById('form-source').value = client.source || '老板分配Leads';
+      document.getElementById('form-status').value = client.status;
+      document.getElementById('form-product').value = client.product || '医疗健康卡 (Medical)';
+      document.getElementById('form-premium').value = client.premium || '';
+      document.getElementById('form-birthday').value = client.birthday || '';
+      document.getElementById('form-nextdate').value = client.nextDate || '';
+      document.getElementById('form-notes').value = client.notes || '';
+      document.getElementById('client-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('client-modal').classList.add('hidden');
+    }
+
+    function saveClient(event) {
+      event.preventDefault();
+      const id = document.getElementById('form-client-id').value;
+      const clientData = {
+        name: document.getElementById('form-name').value,
+        phone: document.getElementById('form-phone').value,
+        source: document.getElementById('form-source').value,
+        status: document.getElementById('form-status').value,
+        product: document.getElementById('form-product').value,
+        premium: Number(document.getElementById('form-premium').value) || 0,
+        birthday: document.getElementById('form-birthday').value,
+        nextDate: document.getElementById('form-nextdate').value,
+        notes: document.getElementById('form-notes').value,
+        lastContact: new Date().toISOString().split('T')[0]
+      };
+
+      if (id) {
+        const idx = clients.findIndex(c => c.id === id);
+        if (idx !== -1) clients[idx] = { ...clients[idx], ...clientData };
+      } else {
+        clientData.id = 'c_' + Date.now();
+        clients.unshift(clientData);
+      }
+
+      localStorage.setItem('zhili_crm_clients', JSON.stringify(clients));
+      closeModal();
+      updateDashboardStats();
+      updateCharts();
+      renderKanban();
+      renderTable();
+      populateGeminiClientSelect();
+      checkUrgentFollowups();
+    }
+
+    function populateGeminiClientSelect() {
+      const sel = document.getElementById('gemini-client-select');
+      sel.innerHTML = '';
+      clients.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.innerText = `${c.name} (${c.status.split('-') || c.status}) - ${c.product.split(' ')[0]}`;
+        sel.appendChild(opt);
+      });
+      autoFillGeminiPrompt();
+    }
+
+    function quickSelectInGemini(clientId) {
+      switchTab('gemini');
+      document.getElementById('gemini-client-select').value = clientId;
+      autoFillGeminiPrompt();
+    }
+
+    function autoFillGeminiPrompt() {
+      const clientId = document.getElementById('gemini-client-select').value;
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        document.getElementById('gemini-custom-notes').value = client.notes || '';
+      }
+    }
+
+    function generateGeminiReply() {
+      const clientId = document.getElementById('gemini-client-select').value;
+      const scenario = document.getElementById('gemini-scenario-select').value;
+      const client = clients.find(c => c.id === clientId) || { name: '朋友', product: '保障计划' };
+      const firstName = client.name.split(' ')[0].replace(/[\(\)（）A-Za-z]/g, '') || client.name;
+
+      let psych = "";
+      let draft = "";
+
+      if (scenario === 'quote_followup') {
+        psych = "客户已收到方案 3 天未回复，通常处于“信息过载”或“担心预算压力”，直接追问会引起防御，需以“降维关心与解压”切入。";
+        draft = `哈喽 ${firstName}，最近工作忙吗？☺️ 上周发你的那个 ${client.product} 建议书先不用着急做决定哈！买保障最重要是觉得安心且完全符合你目前的现金流节奏。你可以先看看里面的主要赔偿范围，如果有任何看不懂或觉得想调整的地方，随时跟我说，完全没有任何压力哈！`;
+      } else if (scenario === 'budget_concern') {
+        psych = "客户提到预算紧，本质是对现金流的掌控欲。不能强推，应肯定对方的务实，并传达‘保障丰俭由人，先筑牢底线’的顾问态度。";
+        draft = `非常理解你，${firstName}！买保险最核心的原则就是“量力而行”，绝不能让保费变成生活的负担。其实保障就像搭积木一样，我们可以先配置一个基础且扎实的底线防线，等未来手头更充裕了再逐步升级。你先安心忙手头的安排，等宽松点了我们再聊！祝你本周顺心！✨`;
+      } else if (scenario === 'family_discuss') {
+        psych = "客户想和家人商量，属于高度理性且顾家的表现。此时应提供弹药协助沟通，而非催促进度。";
+        draft = `太棒了 ${firstName}，家庭保障本来就该夫妻两个人一起了解才最踏实！👍 如果家人看了之后有任何具体细节想了解，或者需要我做一份清晰的 1 页对比总结，随时告诉我。你们先慢慢商量，有任何疑问我随时都在哈！`;
+      } else if (scenario === 'cold_outreach') {
+        psych = "新分配 Leads 对陌生信息防备心强，切忌推销。应以‘专属咨询顾问服务与保单答疑通道’的专业姿态破冰。";
+        draft = `您好 ${firstName}，我是智礼 (Zhi Li)，您的专属寿险与风险管理规划顾问。今天给您打个招呼，后续如果您对现有的个人或家庭保单、医疗卡报销范围有任何疑问，都可以随时发 WhatsApp 找我，我很乐意为您提供客观的梳理建议。祝您工作顺利，生活愉快！😊`;
+      } else if (scenario === 'birthday_wish') {
+        psych = "生日关怀切忌掺杂任何销售意图，纯粹真诚的祝福才能建立持久的人格魅力与转介绍纽带。";
+        draft = `亲爱的 ${firstName}，祝你生日快乐！🎂🎉 新的一岁祝你身体健康、平安顺遂，事业蒸蒸日上！感谢你一直以来的信任与支持，今天一定要吃顿好吃的犒劳一下自己哦！有空约出来喝茶！☕`;
+      } else {
+        psych = "针对现有客户的定期年度保单体检，核心是传递‘售后服务持续在线’的专业负责态度。";
+        draft = `哈喽 ${firstName}，你的保单不知不觉已经生效满一年了！近期医疗通胀和条款有些新的行业动态，想约你喝杯咖啡，帮你做个简单的 10 分钟保单体检，确保你的医疗限额与最新权益都处于最佳状态。你看这周哪天方便，我顺道过去找你？☕`;
+      }
+
+      document.getElementById('gemini-status-tag').innerText = "已生成最优话术";
+      document.getElementById('gemini-psychology-text').innerText = psych;
+      document.getElementById('gemini-draft-box').value = draft;
+      lucide.createIcons();
+    }
+
+    function copyDraft() {
+      const text = document.getElementById('gemini-draft-box').value;
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        const btnText = document.getElementById('copy-btn-text');
+        btnText.innerText = "已复制到剪贴板！";
+        setTimeout(() => btnText.innerText = "复制文案", 2000);
+      });
+    }
+
+    function launchWhatsAppWithDraft() {
+      const clientId = document.getElementById('gemini-client-select').value;
+      const client = clients.find(c => c.id === clientId);
+      const text = document.getElementById('gemini-draft-box').value;
+      if (!client || !text) {
+        alert("请先选择客户并生成文案！");
+        return;
+      }
+      const cleanPhone = client.phone.replace(/[^0-9]/g, '');
+      const encodedText = encodeURIComponent(text);
+      const waUrl = `https://wa.me/6${cleanPhone}?text=${encodedText}`;
+      window.open(waUrl, '_blank');
+    }
+
+    // 导出备份 JSON (便于电脑与 iPhone 同步)
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(clients, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `智礼CRM备份_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // 导入恢复 JSON 数据
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            clients = imported;
+            localStorage.setItem('zhili_crm_clients', JSON.stringify(clients));
+            updateDashboardStats();
+            updateCharts();
+            renderKanban();
+            renderTable();
+            populateGeminiClientSelect();
+            checkUrgentFollowups();
+            alert("✅ 成功导入 " + clients.length + " 条客户档案！");
+          } else {
+            alert("❌ 文件格式不正确，需为客户数组！");
+          }
+        } catch (err) {
+          alert("❌ 解析文件失败，请确认是有效的 JSON 备份文件！");
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>
